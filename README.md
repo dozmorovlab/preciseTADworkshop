@@ -17,6 +17,7 @@ Add:
 
 **Title**
 
+A workshop for <!--leveraging functional genomic annotations to--> precisely predicting 3D domain boundaries at base-level resolution using a custom built machine learning framework
 
 **Authors**
 
@@ -27,13 +28,15 @@ Mikhail G. Dozmorov mikhail.dozmorov@vcuhealth.org
 
 **Keywords**
 
-Comma separated list of keywords.
+Hi-C, TAD, machine learning, classification, random forest, clustering, DBSCAN
 
 **TL;DR**
 
-"Too Long; Didn't Read": a short sentence describing your paper
+In this workshop we outline novel methods for transforming TAD-calling into a supervised machine learning framework by leveraging high resolution functional genomic annotations to precisely predict TAD-boundaries at base-level resolution.
 
 **Abstract**
+
+High-throughput chromosome conformation capture technology (Hi-C) has revealed extensive DNA looping and folding into discrete 3D structures referred to as Topologically Associating Domains (TADs).  TADs are critical for cellular processes like gene regulation and cell differentiation. The relatively low resolution of Hi-C data (regions of several kilobases in size) prevents precise mapping of TAD boundaries by conventional TAD-callers. In contrast, the enrichment of high resolution functional genomic annotations (ChIP-seq) at boundaries offers a computational approach toward improved precision of boundary identification. The workshop presented here describes how to transform TAD-calling into a supervised machine learning framework. We describe how to build and optimize random forest classifers that leverage known molecular drivers of 3D chromatin in order to predict TAD-boundary regions. We then describe an algorithm that utilizes density-based clustering (DBSCAN) and partitioning around medoids (PAM) to precisely predict boundaries at base-level resolution using built-in random forest models. Finally, we compare our results with the popular Arrowhead TAD-caller using both visual and statistical methods. The bulk of this workshop uses the R programming environment and is an extension of the preciseTAD R package. The processes described can be performed with most operating systems and a single computer.
 
 **Affiliation**
 
@@ -43,21 +46,15 @@ List your affiliation
 
 **Bioconductor Package Maintenance**
 
-If you maintain any Bioconductor package(s), please list it/them here.
+preciseTAD
 
 **Associated Packages**
 
-Is your abstract associated with a Bioconductor package?
+preciseTAD
 
 **Submission Type**
 
-Submit an abstract for the format(s) you would like it to be considered for (selecting multiple lengths indicates willingness to be considered for either). Poster can be combined with talk or workshop, but please do not select workshop + talk together. If submitting a workshop, please use the syllabus template at https://github.com/Bioconductor/BioC2018/blob/master/resources/workshop/syllabus.md and note that accepted workshops must be prepared in the format of a Bioconductor package using https://github.com/seandavi/BuildABiocWorkshop2020 as a template.
- 
-- Short talk (8 minutes + 2 minutes for questions) focusing on a package, an application note, or the presentation of a new research project that seeks input and collaborations from the community
-- Long talk (20 minutes + 5 minutes for questions) presenting novel scientific contributions
 - Short workshop (30 - 45 minutes) such as a demonstration of a package or a workflow
-- Long workshop (1.5 - 2 hours) in an interactive format, where participants will be expected to perform an analysis themselves
-- Poster: can be submitted and displayed/presented as plain pdf posters, a shiny app, a web page, … be creative. Posters will be presented in a dedicated remote session
 
 **Submission Is Not Registration**
 
