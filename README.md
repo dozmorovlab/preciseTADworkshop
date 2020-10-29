@@ -32,7 +32,7 @@ Hi-C, TAD, machine learning, classification, random forest, clustering, DBSCAN
 
 **TL;DR**
 
-This workshop will present preciseTAD, a supervised machine learning framework for precisely predicting boundaries of topologically associating domains (TADs) and chromatin loops. Using genome annotation and Hi-C data, we demonstrate how to predict boundaries at base-level resolution. Our pre-trained models allow for base-level prediction of domain boundaries using genome annotation data only.
+preciseTAD, a supervised machine learning framework for precise prediction of boundaries of topologically associating domains (TADs) and chromatin loops. Our pre-trained models predict base-level domain boundaries using only genome annotation data.
 
 **Abstract**
 
