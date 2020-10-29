@@ -17,7 +17,7 @@ Add:
 
 **Title**
 
-A workshop for <!--leveraging functional genomic annotations to--> precisely predicting 3D domain boundaries at base-level resolution using a custom built machine learning framework
+<!--A workshop for leveraging functional genomic annotations to--> preciseTAD: a machine-learning framework for predicting boundaries of 3D genomic elements
 
 **Authors**
 
@@ -32,11 +32,11 @@ Hi-C, TAD, machine learning, classification, random forest, clustering, DBSCAN
 
 **TL;DR**
 
-In this workshop we outline novel methods for transforming TAD-calling into a supervised machine learning framework by leveraging high resolution functional genomic annotations to precisely predict TAD-boundaries at base-level resolution.
+This workshop will present preciseTAD, a supervised machine learning framework for precisely predicting boundaries of topologically associating domains (TADs) and chromatin loops. Using genome annotation and Hi-C data, we demonstrate how to predict boundaries at base-level resolution. Our pre-trained models allow for base-level prediction of domain boundaries using genome annotation data only.
 
 **Abstract**
 
-High-throughput chromosome conformation capture technology (Hi-C) has revealed extensive DNA looping and folding into discrete 3D structures referred to as Topologically Associating Domains (TADs).  TADs are critical for cellular processes like gene regulation and cell differentiation. The relatively low resolution of Hi-C data (regions of several kilobases in size) prevents precise mapping of TAD boundaries by conventional TAD-callers. In contrast, the enrichment of high resolution functional genomic annotations (ChIP-seq) at boundaries offers a computational approach toward improved precision of boundary identification. The workshop presented here describes how to transform TAD-calling into a supervised machine learning framework. We describe how to build and optimize random forest classifers that leverage known molecular drivers of 3D chromatin in order to predict TAD-boundary regions. We then describe an algorithm that utilizes density-based clustering (DBSCAN) and partitioning around medoids (PAM) to precisely predict boundaries at base-level resolution using built-in random forest models. Finally, we compare our results with the popular Arrowhead TAD-caller using both visual and statistical methods. The bulk of this workshop uses the R programming environment and is an extension of the preciseTAD R package. The processes described can be performed with most operating systems and a single computer.
+High-throughput chromosome conformation capture technology (Hi-C) revealed extensive DNA folding into discrete 3D structures referred to as Topologically Associating Domains (TADs) and loops.  TADs are critical for cellular processes like gene regulation and cell differentiation. The relatively low resolution of Hi-C data (tenths of kilobases in size) prevents precise mapping of TAD boundaries by conventional TAD-callers. In contrast, the enrichment of high-resolution genomic annotations at boundaries (ChIP-seq, ~100 bases) offers a computational approach toward improved boundary identification. The workshop describes how to transform TAD-calling into a supervised machine learning framework. We demonstrate how to build and optimize a random forest model that prioritizes known molecular signatures of domain boundaries to predict each base's probability of being a boundary. We utilize density-based clustering (DBSCAN) and partitioning around medoids (PAM) to identify boundary regions and the most probable points. Boundaries identified by preciseTAD show strong signal enrichment of known boundary signatures compared with Arrowhead- and Peakachu boundaries. This workshop uses the R programming environment, the preciseTAD R package (https://bioconductor.org/packages/preciseTAD/), and can be performed with most operating systems on a single computer.
 
 **Affiliation**
 
