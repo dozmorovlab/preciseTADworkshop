@@ -14,7 +14,7 @@ output:
     toc: true
     toc_depth: 3
     fig_width: 5
-bibliography: bibliography.bib
+bibliography: references.bib
 vignette: >
   %\VignetteIndexEntry{preciseTAD: a machine-learning framework for predicting boundaries of 3D genomic elements}
   %\VignetteEngine{knitr::rmarkdown}
@@ -40,9 +40,75 @@ options(stringsAsFactors = FALSE)
 library(preciseTAD)
 ```
 
+## Introduction
+
+The advent of chromosome conformation capture (3C) sequencing technologies, and its successor Hi-C, have revealed a hierarchy of the 3-dimensional (3D) structure of the human genome such as chromatin loops [@rao20143d], Topologically Associating Domains (TADs) [@nora2012spatial;@dixon2012topological], and A/B compartments [@lieberman2009comprehensive]. At the megabase scale, TADs represent regions on the linear genome that are highly self-interacting. Emerging evidence has linked TADs to critical roles in cell dynamics and cell differentiation. Studies have shown that TADs themselves are highly conserved across species and cell lines [@dixon2012topological; @krefting2018evolutionary; @nora2012spatial; @dixon2015chromatin; @rao20143d; @Schmitt2016aa]. Disruption of boundaries demarcating TADs and loops promotes cancer [@hnisz2016activation; @taberlay2016three] and other disorders [@lupianez2016breaking;@Sun:2018aa;@Meaburn:2007aa]. Identifying the precise location of TAD boundaries remains a top priority in our goal to fully understand the functionality of the human genome.
+
+In this workshop, we present *preciseTAD*, an optimally tuned machine learning framework for precise identification of domain boundaries using genome annotation data. Our method utilizes the random forest (RF) algorithm trained on high-resolution chromatin state (BroadHMM), histone modification (HM), and transcription factor binding site (TFBS) data to predict low-resolution boundaries. We introduce a systematic pipeline for building the optimal boundary region prediction classifier. Translated from Hi-C data resolution level to base level (annotating each base and predicting its boundary probability), *preciseTAD* employs density-based clustering (DBSCAN) and partitioning around medoids (PAM) to detect genome annotation-guided boundary regions and points at a base-level resolution. This approach circumvents resolution restrictions of Hi-C data, allowing for the precise detection of biologically meaningful boundaries.
+
+In this workshop we will demonstrate the following:
+
+<!--
+- Spatial associations (linear distance) between boundaries and annotations perform best for predicting boundary regions
+- Simple random under-sampling effectively addresses the negative effect of class imbalance
+-->
+- *preciseTAD* predictions are more enriched for known molecular drivers of 3D chromatin, including CTCF, RAD21, SMC3, and ZNF143
+- *preciseTAD*-predicted boundaries are more conserved across cell lines
+- Using methods developed, a model trained in one cell line can predict boundaries in another cell line
+
 ## Obtaining ground truth TAD boundaries
 
+*preciseTAD* uses pre-defined TAD boundary coordinates as ground truth. We opt to use the Arrowhead to define our ground truth TAD boundaries, a gold-standard TAD-caller developed by [Aiden Lab](https://github.com/aidenlab/juicer/wiki/Citing-Juicer) [@durand2016juicer]. The .hic files are publically available on GEO [here](), and are provided by the same team that developed Arrowhead [@rao20143d]. For the *preciseTAD* paper and this workshop we will be working with the "GSE63525_GM12878_insitu_primary.hic" file. This .hic file is a highly compressed binary file that has contact matrices from multiple biological replicate HiC experiments, at different resolutions, for GM12878. You can read the full protocol used to derive the various .hic files [here](https://www.cell.com/cell/pdfExtended/S0092-8674(14)01497-4).
+
+Once you have the .hic file downloaded, you are ready to implement Arrowhead to call TAD boundaries. Below is an example of how you would perform this for every chromosome:
+
+```{bash, eval=FALSE}
+for i in 5000 10000 25000 50000 100000;
+	do 
+		echo $i.kb
+			for j in {1..22};
+				do
+				echo chr$j
+				java -jar juicebox_tools_7.5.jar arrowhead -c $j \ #chromosome to call TADs on
+				                                           -r $i \ #HiC data resolution
+				                                           ~/GSE63525_GM12878_insitu_primary.hic \ #location of the .HIC file
+				                                           ~/arrowhead_output/GM12878/$i.b/chr$j #location to store the output
+			done;
+	done;
+	
+```
+
+Note: This creates separate files for each chromosome (given a specific resolution). As an example, here is what the first few lines of CHR1 look like:
+
+| chr1 | x1        | x2        | chr2 | y1        | y2        | color     | score               | uVarScore           | lVarScore           | upSign             | loSign              |
+|------|-----------|-----------|------|-----------|-----------|-----------|---------------------|---------------------|---------------------|--------------------|---------------------|
+| 1    | 49375000  | 50805000  | 1    | 49375000  | 50805000  | 255,255,0 | 0.8635365988485998  | 0.3025175910115416  | 0.2942087461534729  | 0.4431332556332556 | 0.6401515151515151  |
+| 1    | 16830000  | 17230000  | 1    | 16830000  | 17230000  | 255,255,0 | 0.20513320424507786 | 0.3676005813255187  | 0.22358121923097696 | 0.4121951219512195 | 0.4792682926829268  |
+| 1    | 163355000 | 164860000 | 1    | 163355000 | 164860000 | 255,255,0 | 0.8052794339967723  | 0.27908025641958345 | 0.3017420763866275  | 0.657032586290075  | 0.5470812683654226  |
+| 1    | 231935000 | 233400000 | 1    | 231935000 | 233400000 | 255,255,0 | 0.43336944864061144 | 0.28052310457518204 | 0.27077299003747285 | 0.451432273589708  | 0.44314868804664725 |
+| 1    | 149035000 | 149430000 | 1    | 149035000 | 149430000 | 255,255,0 | 0.8579084086781587  | 0.3477831683616397  | 0.18791010793617813 | 0.45375            | 0.805625            |
+
+Explanations of each field are as follows:
+
+- chromosome = the chromosome that the domain is located on
+- x1,x2/y1,y2 = the interval spanned by the domain (contact domains manifest as squares on the diagonal of a Hi-C matrix and as such: x1=y1, x2=y2)
+- color = the color that the feature will be rendered as if loaded in Juicebox
+- corner_score = the corner score, a score indicating the likelihood that a pixel is at the corner of a contact domain. Higher values indicate a greater likelihood of being at the corner of a domain
+- Uvar = the variance of the upper triangle
+- Lvar = the variance of the lower triangle
+- Usign = -1*(sum of the sign of the entries in the upper triangle)
+- Lsign = sum of the sign of the entries in the lower triangle
+
+For the purposes of this workshop, we are only interested in the first 3 columns, the chromosome, and the start and end coordinates of each called TAD. Since this is performed per chromosome, each chromosome specific file needs to be concatenated to obtain the full list of TADs on the entire genome. For convenience, the TADs called at 5kb resolution for GM12878 using Arrowhead are provided internally in the *preciseTAD* package.
+
+```{r}
+data("arrowhead_gm12878_5kb")
+head(arrowhead_gm12878_5kb)
+```
+
 ## Obtaining functional genomic elements
+
+
 
 ## Implementing *preciseTAD* functionality
 
