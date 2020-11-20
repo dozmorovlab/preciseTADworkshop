@@ -1,65 +1,72 @@
-# preciseTADworkshop
+# preciseTAD: a machine-learning framework for predicting boundaries of 3D genomic elements
 
-Precise prediction of TAD/loop boundaries, https://doi.org/10.1101/2020.09.03.282186
+The [preciseTADworkshop](https://github.com/dozmorovlab/preciseTADworkshop) introduces methods for transforming the identification of boundaries that demarcate Topologically Associating Domains (TADs)-- referred to as TAD-calling--into a supervised machine learning framework. Chromosome conformation capture technologies combined with high-throughput sequencing (Hi-C) have revealed that chromatin undergoes layers of compaction through DNA looping and folding, forming dynamic 3-dimensional (3D) structures. Among these are TADs, which are known to play critical roles in cell dynamics like gene regulation and cell differentiation. However, precise TAD-calling remains difficult, as it is strongly reliant on Hi-C data resolution. Obtaining genome-wide chromatin interactions at high-resolution is costly resulting in low resolution of Hi-C matrices and high uncertainty in the location of domain boundaries. In this workshop we will circumvent this resolution restriction by building predictive models that leverage high resolution functional genomic element data (ChIP-seq). As an application, we will demonstrate that these methods provide more precise boundary detection compared to a conventional TAD-calling algorithm by evaluating a variety of visualization techniques in relation to the enrichment of key molecular drivers of 3D chromatin. The methods discussed in this workshop will give users tools for bridging the resolution gap between 1D ChIP-seq annotations and 3D Hi-C sequencing data for more precise and biologically meaningful boundary identification.
 
+This workshop is based on [Spiro C. Stilianoudakis, Mikhail G. Dozmorov; "preciseTAD: A machine learning framework for precise 3D domain boundary prediction at base-level resolution"](https://doi.org/10.1101/2020.09.03.282186). 
 
-# European Bioconductor Conference 2020
-https://openreview.net/group?id=bioconductor.org/EuroBioC/2020/Conference
-Abstract submission for talks, posters, and workshops.
+Key materials for the workshop: 
 
-Virtual  Dec 14 2020  https://eurobioc2020.bioconductor.org/  eurobioc2020@stat.unipd.it
+- [???Slides with a brief introduction for the workshop]()
+- [preciseTADworkshop GitHub repo](https://github.com/dozmorovlab/preciseTADworkshop)
+- [???preciseTADworkshop Docker image]()
+- [???preciseTADworkshop pkgdown website]()
 
-Please see the venue website for more information.
+This workshop will be presented at the [Bioconductor Virtual Conference 2020](https://bioc2020.bioconductor.org/), December ???, 2020, ???am-???pm
 
-Submission Start: Aug 31 2020 12:00AM UTC-0, End: Oct 30 2020 12:00AM UTC-0
+# Using Docker
 
-Add: 
+???
 
-**Title**
+# Local Installation
 
-<!--A workshop for leveraging functional genomic annotations to--> preciseTAD: a machine-learning framework for predicting boundaries of 3D genomic elements
+```
+if(!require(devtools)) install.packages("devtools")
+devtools::install_github(repo = "dozmorovlab/preciseTADworkshop", build_vignettes = TRUE)
+```
 
-**Authors**
+If installation fails due to missing packages, install them as follows:
 
-Search author profile by first, middle and last name or email address. If the profile is not found, you can add the author completing first, middle, last and name and author email address.
+```
+if(!require(BiocManager)) install.packages("BiocManager")
+BiocManager::install(c('preciseTAD', 'preciseTADhub'))
+```
 
-Spiro Stilianoudakis stilianoudasc@mymail.vcu.edu  
-Mikhail G. Dozmorov mikhail.dozmorov@vcuhealth.org
+# Workshop Description
 
-**Keywords**
+## Contact information
 
-Hi-C, TAD, machine learning, classification, random forest, clustering, DBSCAN
+- Spiro Stilianoudakis (stilianoudasc@vcu.edu)
+- Mikhail Dozmorov (mikhail.dozmorov@vcuhealth.org)
 
-**TL;DR**
+## Pre-requisites
 
-preciseTAD, a supervised machine learning framework for precise prediction of boundaries of topologically associating domains (TADs) and chromatin loops. Our pre-trained models predict base-level domain boundaries using only genome annotation data.
+* Basic knowledge of R syntax and command-line tools
+* Familiarity with Hi-C chromatin conformation capture technology
+* Understanding of Hi-C data properties (contact matrices, interaction frequencies, Topologically Associating Domains, etc)
+* Familiarity with TAD-callers, specifically [Arrowhead](https://github.com/aidenlab/juicer/wiki/Arrowhead)
+* Familiarity with supervised machine learning techniques (e.g. classification) and clustering algorithms
 
-**Abstract**
+# R / Bioconductor packages used
 
-High-throughput chromosome conformation capture technology (Hi-C) revealed extensive DNA folding into discrete 3D structures referred to as Topologically Associating Domains (TADs) and loops.  TADs are critical for cellular processes like gene regulation and cell differentiation. The relatively low resolution of Hi-C data (tens of kilobases in size) prevents precise mapping of TAD boundaries by conventional TAD-callers. In contrast, the enrichment of high-resolution genomic annotations at boundaries (ChIP-seq, ~100 bases) offers a computational approach toward improved boundary identification. The workshop describes how to transform TAD-calling into a supervised machine learning framework. We demonstrate how to build and optimize a random forest model that prioritizes known molecular signatures of domain boundaries to predict each base's probability of being a boundary. We utilize density-based clustering (DBSCAN) and partitioning around medoids (PAM) to identify boundary regions and the most probable points. Boundaries identified by preciseTAD show strong signal enrichment of known boundary signatures compared with Arrowhead- and Peakachu boundaries. This workshop uses the R programming environment, the preciseTAD R package (https://bioconductor.org/packages/preciseTAD/), and can be performed with most operating systems on a single computer.
+* [preciseTAD](https://www.bioconductor.org/packages/preciseTAD)
+* [preciseTADhub](https://github.com/dozmorovlab/preciseTADhub)
 
-**Affiliation**
+## Time outline
 
-List your affiliation
+The workshop duration is ~45 min. The approximate timing of activities are shown below:
 
-**Gender**
+| Activity                                              | Time |
+|-------------------------------------------------------|------|
+| Overview of *preciseTAD*                              | 10m  |
+| Model building                                        | 15m  |
+| Precise domain boundary prediction                    | 15m  |
+| Questions and answers session                         | 5m   |
 
-**Bioconductor Package Maintenance**
+### Learning Goals
 
-preciseTAD
+* Get familiar with Hi-C data 
+* Understand to transform TAD boundary prediction into a supervised machine learning framework
+* Build a predictive model using functional genomic elements
+* Predict TAD boundaries at base-level resolution
+* Understand and compare results using a variety of different vizualization techniques including enriched heatmaps, signal profile plots, and venn diagrams
 
-**Associated Packages**
-
-preciseTAD
-
-**Submission Type**
-
-- Short workshop (30 - 45 minutes) such as a demonstration of a package or a workflow
-
-**Submission Is Not Registration**
-
-I am aware that this form does not constitute a registration. See the conference page for details about the registration.
-
-**Code Of Conduct**
-
-I agree to abide by the Bioconductor Code of Conduct (https://eurobioc2020.bioconductor.org/code_of_conduct) during the conference and in all interactions with the Bioconductor community. This includes prohibitions on harassment, discrimination, and intellectual bullying. It also includes a social media policy that anything presented at the conference may be posted publicly unless explicitly requested otherwise by the presenter.
