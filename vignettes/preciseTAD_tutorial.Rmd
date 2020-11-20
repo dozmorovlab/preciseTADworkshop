@@ -108,9 +108,80 @@ head(arrowhead_gm12878_5kb)
 
 ## Obtaining functional genomic elements
 
+The next piece of data that we need are the functional genomic elements used to construction the feature space. These are processed narrowPeak ChIP-seq data in the form of .BED files with chromosome, and start and end coordinates of called peaks of signal enrichment. For this workshop we consider 3 classes of genomic elements: BroadHMM (N=15), histone modifications (N=11), and transcription factor binding sites (N=26). They are shown below:
 
+| Genomic Class                               | Element         |
+|---------------------------------------------|-----------------|
+| BroadHMM chromatin segmentations            | 10TxnElongation |
+|                                             | 11WeakTxn       |
+|                                             | 12Repressed     |
+|                                             | 13Heterochromlo |
+|                                             | 14RepetitiveCNV |
+|                                             | 15RepetitiveCNV |
+|                                             | 1ActivePromoter |
+|                                             | 2WeakPromoter   |
+|                                             | 3PoisedPromoter |
+|                                             | 4StrongEnhancer |
+|                                             | 5StrongEnhancer |
+|                                             | 6WeakEnhancer   |
+|                                             | 7WeakEnhancer   |
+|                                             | 8Insulator      |
+|                                             | 9TxnTransition  |
+| Histone Modifications (HM)                  | H2az            |
+|                                             | H3k27ac         |
+|                                             | H3k27me3        |
+|                                             | H3k36me3        |
+|                                             | H3k4me1         |
+|                                             | H3k4me2         |
+|                                             | H3k4me3         |
+|                                             | H3k79me2        |
+|                                             | H3k9ac          |
+|                                             | H3k9me3         |
+|                                             | H4k20me1        |
+| Transcription Factor Binding Sites   (TFBS) | Atf3            |
+|                                             | Cfos            |
+|                                             | Cmyc            |
+|                                             | Ctcf            |
+|                                             | Egr1            |
+|                                             | Ets1            |
+|                                             | Gabp            |
+|                                             | Jund            |
+|                                             | Max             |
+|                                             | Mazab85725      |
+|                                             | Mef2a           |
+|                                             | Mxi1            |
+|                                             | P300            |
+|                                             | Pmlsc71910      |
+|                                             | Pol2            |
+|                                             | Pu1             |
+|                                             | Rad21           |
+|                                             | Rfx5            |
+|                                             | Sin3a           |
+|                                             | Six5            |
+|                                             | Smc3ab9263      |
+|                                             | Sp1             |
+|                                             | Srf             |
+|                                             | Stat1           |
+|                                             | Taf1            |
+|                                             | Tr4             |
+|                                             | Yy1             |
+|                                             | Znf143          |
 
-## Implementing *preciseTAD* functionality
+Cell type-specific genomic annotation data can be downloaded from the [ENCODE](http://www.encodeproject.org/chip-seq-matrix/?type=Experiment&replicates.library.biosample.donor.organism.scientific_name=Homo%20sapiens&assay_title=TF%20ChIP-seq&status=released) data portal as BED files. For convenience, we have included the list of elements in the `\data\genomicElements` folder of the github repository [here](https://github.com/dozmorovlab/preciseTADworkshop).
+
+## Describing *preciseTAD* functionality
+
+The training/testing data used for modeling is represented as a matrix with rows being genomic regions, columns being genomic annotations, and cells containing measures of association between them. Users have the option to concatenate genomic regions from multiple chromosomes.
+
+To create the row-wise dimension of the data, `preciseTAD` uses *shifted binning*, a strategy for making the dimensions of the data matrix used for modeling by segmenting the linear genome into nonoverlapping regions. This step is transparent for the user. To create shifted bins, chromosome-specific bins start at half of the resolution *r*, and continue in congruent intervals of length *r* until the end of the chromosome (*mod r* + *r/2*), using hg19 genomic coordinates. The shifted genomic bins, are then defined as boundary regions (*Y = 1*) if they contain a called boundary, and non-boundary regions (*Y = 0*) otherwise, thus establishing the binary response vector (**Y**) used for classification (???Figure X). Intuitively, shifted bins are centered on borders between the original bins, thus capturing potential boundaries.
+
+The column-wise dimension is formed by genomic annotations, such as transcription factor binding sites (TFBSs), histone modification marks, chromatin states. The *($log_{2}$) distances*, which enumerate the genomic distance from the center of each genomic bin to the center of the nearest ChIP-seq peak region of interest, form the feature space (???Figure X). The customized training/testing data formation offered by `preciseTAD` allows users to implement any binary classification machine learning algorithm. 
+
+`preciseTAD` implements a random forest (RF) model, allowing tuning hyperparameters and applying feature reduction. The primary inputs are the training and testing data, a list of hyperparameter values, the number of cross-validation folds to use (if a grid of hyperparameter values is provided), and the metric used for optimization. The output includes the model object (necessary for downstream prediction of boundaries), the variable importance values, and a list of performance metrics when validating the model on the testing data (see Table 1). This model is then used to predict base-level precise boundary locations.
+
+To predict the base-level location of domain boundaries, the `preciseTAD` model is applied for each base annotated with the aforementioned genomic annotations. The base-level probabilities are clustered using density-based clustering and scalable data partitioning techniques, to narrow boundary regions and points. First, the probability vector, $p_{n_{i}}$, is extracted ($n_{i}$ representing the length of chromosome $i$). Next, *DBSCAN* (Density-based Spatial Clustering of Applications with Noise) [@ester1996density; @hahsler2019dbscan] is applied to the matrix of pairwise genomic distances between bases with $p_{n_{i}} \ge t$, where $t$ is a threshold determined by the user. The resulting clusters of highly predictive bases identified by DBSCAN are termed *preciseTAD boundary regions* (PTBR). To precisely identify a single base among each PTBR, *preciseTAD* implements partitioning around medoids (PAM) within each cluster. The corresponding cluster medoid is defined as a *preciseTAD boundary point* (PTBP), making it the most representative and biologically meaningful base within each clustered PTBR. The output includes a list of genomic coordinates of PTBPs and PTBSs.
+
+`preciseTAD` allows us to use the pre-trained model to predict the precise location of domain boundaries in cell types without Hi-C data but with genome annotation data. Specifically, only cell-type-specific ChIP-seq data (BED format) for CTCF, RAD21, SMC3, and ZNF143 transcription factor binding sites is required. We provide models pre-trained using GM12878 and K562 genome annotation data, and Arrowhead- and Peakachu-predicted boundaries for chromosome-specific prediction of precise domain boundaries in other cell types.
 
 ### Model building
 
