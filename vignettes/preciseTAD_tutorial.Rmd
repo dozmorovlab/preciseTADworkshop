@@ -38,11 +38,17 @@ options(stringsAsFactors = FALSE)
 #     install.packages("BiocManager")
 # BiocManager::install("preciseTAD")
 library(preciseTAD)
+library(ExperimentHub)
+library(devtools)
+library(knitr)
+
+#install_github("stilianoudakis/preciseTADhub")
+#library(preciseTADhub)
 ```
 
 ## Introduction
 
-The advent of chromosome conformation capture (3C) sequencing technologies, and its successor Hi-C, have revealed a hierarchy of the 3-dimensional (3D) structure of the human genome such as chromatin loops [@rao20143d], Topologically Associating Domains (TADs) [@nora2012spatial;@dixon2012topological], and A/B compartments [@lieberman2009comprehensive]. At the megabase scale, TADs represent regions on the linear genome that are highly self-interacting. Emerging evidence has linked TADs to critical roles in cell dynamics and cell differentiation. Studies have shown that TADs themselves are highly conserved across species and cell lines [@dixon2012topological; @krefting2018evolutionary; @nora2012spatial; @dixon2015chromatin; @rao20143d; @Schmitt2016aa]. Disruption of boundaries demarcating TADs and loops promotes cancer [@hnisz2016activation; @taberlay2016three] and other disorders [@lupianez2016breaking;@Sun:2018aa;@Meaburn:2007aa]. Identifying the precise location of TAD boundaries remains a top priority in our goal to fully understand the functionality of the human genome.
+The advent of chromosome conformation capture (3C) sequencing technologies, and its successor Hi-C, have revealed a hierarchy of the 3-dimensional (3D) structure of the human genome such as chromatin loops [@rao20143d], Topologically Associating Domains (TADs) [@nora2012spatial;@dixon2012topological], and A/B compartments [@lieberman2009comprehensive]. At the megabase scale, TADs represent regions on the linear genome that are highly self-interacting. Emerging evidence has linked TADs to critical roles in cell dynamics and cell differentiation. Studies have shown that TADs themselves are highly conserved across species and cell lines [@dixon2012topological; @krefting2018evolutionary; @nora2012spatial; @dixon2015chromatin; @rao20143d; @Schmitt2016aa]. Disruption of boundaries demarcating TADs and loops promotes cancer [@hnisz2016activation; @taberlay2016three] and other disorders [@lupianez2016breaking;@Sun:2018aa;@Meaburn:2007aa]. Therefore, identifying the precise location of TAD boundaries remains a top priority in our goal to fully understand the functionality of the human genome.
 
 In this workshop, we present *preciseTAD*, an optimally tuned machine learning framework for precise identification of domain boundaries using genome annotation data. Our method utilizes the random forest (RF) algorithm trained on high-resolution chromatin state (BroadHMM), histone modification (HM), and transcription factor binding site (TFBS) data to predict low-resolution boundaries. We introduce a systematic pipeline for building the optimal boundary region prediction classifier. Translated from Hi-C data resolution level to base level (annotating each base and predicting its boundary probability), *preciseTAD* employs density-based clustering (DBSCAN) and partitioning around medoids (PAM) to detect genome annotation-guided boundary regions and points at a base-level resolution. This approach circumvents resolution restrictions of Hi-C data, allowing for the precise detection of biologically meaningful boundaries.
 
@@ -54,13 +60,13 @@ In this workshop we will demonstrate the following:
 -->
 - *preciseTAD* predictions are more enriched for known molecular drivers of 3D chromatin, including CTCF, RAD21, SMC3, and ZNF143
 - *preciseTAD*-predicted boundaries are more conserved across cell lines
-- Using methods developed, a model trained in one cell line can predict boundaries in another cell line
+- Using the methods developed, a model trained in one cell line can predict boundaries in another cell line
 
 ## Obtaining ground truth TAD boundaries
 
-*preciseTAD* uses pre-defined TAD boundary coordinates as ground truth. We opt to use the Arrowhead to define our ground truth TAD boundaries, a gold-standard TAD-caller developed by [Aiden Lab](https://github.com/aidenlab/juicer/wiki/Citing-Juicer) [@durand2016juicer]. The .hic files are publically available on GEO [here](), and are provided by the same team that developed Arrowhead [@rao20143d]. For the *preciseTAD* paper and this workshop we will be working with the "GSE63525_GM12878_insitu_primary.hic" file. This .hic file is a highly compressed binary file that has contact matrices from multiple biological replicate HiC experiments, at different resolutions, for GM12878. You can read the full protocol used to derive the various .hic files [here](https://www.cell.com/cell/pdfExtended/S0092-8674(14)01497-4).
+*preciseTAD* uses pre-defined TAD boundary coordinates as ground truth. We opt to use the Arrowhead algorithm to define our ground truth TAD boundaries, a gold-standard TAD-caller developed by [Aiden Lab](https://github.com/aidenlab/juicer/wiki/Citing-Juicer) [@durand2016juicer]. The .hic files are publically available on GEO [here](), and are provided by the same team that developed Arrowhead [@rao20143d]. For the *preciseTAD* paper and this workshop we will be working with the "GSE63525_GM12878_insitu_primary.hic" file. This .hic file is a highly compressed binary file that has contact matrices from multiple biological replicate HiC experiments, at different resolutions, for GM12878. You can read the full protocol used to derive the various .hic files [here](https://www.cell.com/cell/pdfExtended/S0092-8674(14)01497-4).
 
-Once you have the .hic file downloaded, you are ready to implement Arrowhead to call TAD boundaries. Below is an example of how you would perform this for every chromosome:
+Once you have the .hic file downloaded, you are ready to implement Arrowhead to call TAD boundaries. Below is an example of how you would perform this for every chromosome and for a variety of resolutions:
 
 ```{bash, eval=FALSE}
 for i in 5000 10000 25000 50000 100000;
@@ -78,7 +84,7 @@ for i in 5000 10000 25000 50000 100000;
 	
 ```
 
-Note: This creates separate files for each chromosome (given a specific resolution). As an example, here is what the first few lines of CHR1 look like:
+Note: This creates separate files for each chromosome (given a specific resolution). As an example, here is what the first few lines of CHR1 look like, performed at 5kb:
 
 | chr1 | x1        | x2        | chr2 | y1        | y2        | color     | score               | uVarScore           | lVarScore           | upSign             | loSign              |
 |------|-----------|-----------|------|-----------|-----------|-----------|---------------------|---------------------|---------------------|--------------------|---------------------|
@@ -108,8 +114,9 @@ head(arrowhead_gm12878_5kb)
 
 ## Obtaining functional genomic elements
 
-The next piece of data that we need are the functional genomic elements used to construction the feature space. These are processed narrowPeak ChIP-seq data in the form of .BED files with chromosome, and start and end coordinates of called peaks of signal enrichment. For this workshop we consider 3 classes of genomic elements: BroadHMM (N=15), histone modifications (N=11), and transcription factor binding sites (N=26). They are shown below:
+The next piece of data that we need are the functional genomic elements used to construct the feature space. These are processed narrowPeak ChIP-seq data in the form of .BED files with chromosome, and start and end coordinates of called peaks of signal enrichment. For this workshop we consider 43 transcription factor binding sites.
 
+<!--
 | Genomic Class                               | Element         |
 |---------------------------------------------|-----------------|
 | BroadHMM chromatin segmentations            | 10TxnElongation |
@@ -166,6 +173,7 @@ The next piece of data that we need are the functional genomic elements used to 
 |                                             | Tr4             |
 |                                             | Yy1             |
 |                                             | Znf143          |
+-->
 
 Cell type-specific genomic annotation data can be downloaded from the [ENCODE](http://www.encodeproject.org/chip-seq-matrix/?type=Experiment&replicates.library.biosample.donor.organism.scientific_name=Homo%20sapiens&assay_title=TF%20ChIP-seq&status=released) data portal as BED files. For convenience, we have included the list of elements in the `\data\genomicElements` folder of the github repository [here](https://github.com/dozmorovlab/preciseTADworkshop).
 
@@ -175,21 +183,267 @@ The training/testing data used for modeling is represented as a matrix with rows
 
 To create the row-wise dimension of the data, `preciseTAD` uses *shifted binning*, a strategy for making the dimensions of the data matrix used for modeling by segmenting the linear genome into nonoverlapping regions. This step is transparent for the user. To create shifted bins, chromosome-specific bins start at half of the resolution *r*, and continue in congruent intervals of length *r* until the end of the chromosome (*mod r* + *r/2*), using hg19 genomic coordinates. The shifted genomic bins, are then defined as boundary regions (*Y = 1*) if they contain a called boundary, and non-boundary regions (*Y = 0*) otherwise, thus establishing the binary response vector (**Y**) used for classification (???Figure X). Intuitively, shifted bins are centered on borders between the original bins, thus capturing potential boundaries.
 
-The column-wise dimension is formed by genomic annotations, such as transcription factor binding sites (TFBSs), histone modification marks, chromatin states. The *($log_{2}$) distances*, which enumerate the genomic distance from the center of each genomic bin to the center of the nearest ChIP-seq peak region of interest, form the feature space (???Figure X). The customized training/testing data formation offered by `preciseTAD` allows users to implement any binary classification machine learning algorithm. 
+The column-wise dimension is formed by genomic annotations, such as transcription factor binding sites (TFBSs), histone modification marks, and chromatin states. In this workshop we focus on the *($log_{2}$) distances*, which enumerate the genomic distance from the center of each genomic bin to the center of the nearest ChIP-seq peak region of interest, although other options are available (see ?preciseTAD::createTADdata). These quantaties form the feature space $\textbf{X} = \{X_{1}, X_{2} \cdots X_{p} \}$ (???Figure X). The customized training/testing data formation offered by `preciseTAD` allows users to implement any binary classification machine learning algorithm. 
 
-`preciseTAD` implements a random forest (RF) model, allowing tuning hyperparameters and applying feature reduction. The primary inputs are the training and testing data, a list of hyperparameter values, the number of cross-validation folds to use (if a grid of hyperparameter values is provided), and the metric used for optimization. The output includes the model object (necessary for downstream prediction of boundaries), the variable importance values, and a list of performance metrics when validating the model on the testing data (see Table 1). This model is then used to predict base-level precise boundary locations.
+`preciseTAD` provides functionality to implement a random forest (RF) model, allowing tuning hyperparameters and applying feature reduction. The primary inputs are the training and testing data, a list of hyperparameter values, the number of cross-validation folds to use (if a grid of hyperparameter values is provided), and the metric used for optimization. The output includes the model object (necessary for downstream prediction of boundaries), the variable importance values, and a list of performance metrics when validating the model on the testing data. This model is then used to predict base-level precise boundary locations.
 
 To predict the base-level location of domain boundaries, the `preciseTAD` model is applied for each base annotated with the aforementioned genomic annotations. The base-level probabilities are clustered using density-based clustering and scalable data partitioning techniques, to narrow boundary regions and points. First, the probability vector, $p_{n_{i}}$, is extracted ($n_{i}$ representing the length of chromosome $i$). Next, *DBSCAN* (Density-based Spatial Clustering of Applications with Noise) [@ester1996density; @hahsler2019dbscan] is applied to the matrix of pairwise genomic distances between bases with $p_{n_{i}} \ge t$, where $t$ is a threshold determined by the user. The resulting clusters of highly predictive bases identified by DBSCAN are termed *preciseTAD boundary regions* (PTBR). To precisely identify a single base among each PTBR, *preciseTAD* implements partitioning around medoids (PAM) within each cluster. The corresponding cluster medoid is defined as a *preciseTAD boundary point* (PTBP), making it the most representative and biologically meaningful base within each clustered PTBR. The output includes a list of genomic coordinates of PTBPs and PTBSs.
 
 `preciseTAD` allows us to use the pre-trained model to predict the precise location of domain boundaries in cell types without Hi-C data but with genome annotation data. Specifically, only cell-type-specific ChIP-seq data (BED format) for CTCF, RAD21, SMC3, and ZNF143 transcription factor binding sites is required. We provide models pre-trained using GM12878 and K562 genome annotation data, and Arrowhead- and Peakachu-predicted boundaries for chromosome-specific prediction of precise domain boundaries in other cell types.
 
+## Using *preciseTAD*
+
+As an example of the functionality of *preciseTAD*, lets consider the goal of predicting TAD boundary coordinates for CHR14 on GM12878 at 5kb. First, we will build an optimized model to predict TAD boundary *regions*, then we will leverage said model to predict boundaries on CHR14 at base-level resolution. We will consider the heuristic of training a model on chromosomes 1-13 & 15-22, while reserving data from CHR14 as the test data. 
+
 ### Model building
 
-### Optimization
+Users will need to transform the TAD coordinate data into a GRanges object of unique boundary coordinates using the `preciseTAD::extractBoundaries()` function. Here we only extract boundaries for CHR1-CHR22 because all chromosomes will be in use (either in the training set or the testing set). We specify `preprocess=FALSE` because we are only interested in boundaries and not filtering TADs by length. Lastly, we specify `resolution=5000` to match the resolution used by *Arrowhead* (although this argument is ignored given that `preprocess=FALSE`). As shown below, there were a total of 16153 unique TAD boundaries reported by *Arrowhead* for chromosomes 1-22.
+
+```{r}
+bounds <- extractBoundaries(domains.mat = arrowhead_gm12878_5kb, 
+                            preprocess = FALSE, 
+                            CHR = paste0("CHR",1:22), 
+                            resolution = 5000)
+# View unique boundaries
+bounds
+```
+
+Additionally, users will need to add each of the respective .BED files,representing the functional genomic elements of choice, to a single `GenomicRangesList` object. This can be done via the `preciseTAD::bedToGRangesList()` function. The `signal` argument refers to the column in the BED files containing peak signal strength values and is used to assign metadata to the corresponding GRanges (this needs to be the same column for every .BED file; only necessary for downstream plotting).
+
+```{r}
+path <- "../data/genomicElements"
+path
+tfbsList <- bedToGRangesList(filepath=path, bedList=NULL, bedNames=NULL, pattern = "*.bed", signal=4)
+
+names(tfbsList)
+```
+
+Using the "ground-truth" boundaries and the annotations, we can build the data matrix that will be used for predictive modeling. The `preciseTAD::createTADdata()` function can create the training and testing data simultaneously as a list object. Here, we specify to train on chromosomes 1-22 and test on chromosome 14. Additionally, we specify `resolution = 5000` to construct 5kb shifted genomic bins (to match the Hi-C data resolution), `featureType = "distance"` for a $log_2(distance + 1)$-type feature space, and `resampling = "rus"` to apply random under-sampling (RUS) on the training data to balance classes of boundary vs. non-boundary regions. We also specify a seed to ensure reproducibility when performing the resampling. The result is a list containing two data frames: (1) the resampled (if specified) training data, and (2) the testing data.
+
+```{r}
+set.seed(123)
+tadData <- createTADdata(bounds.GR = bounds,
+                         resolution = 5000,
+                         genomicElements.GR = tfbsList,
+                         featureType = "distance",
+                         resampling = "rus",
+                         trainCHR = paste0("CHR",c(1:13,15:22)),
+                         predictCHR = "CHR14")
+
+# View subset of training data
+tadData[[1]][1:5,1:4]
+# Check it is balanced
+table(tadData[[1]]$y)
+
+# View subset of testing data
+tadData[[2]][1:5,1:4]
+```
+
+### Optimization and Model Evaluation
+
+We can now implement our machine learning algorithm of choice to predict boundary regions. Here, we opt for the random forest algorithm for binary classification. `preciseTAD` offers functionality for performing recursive feature elimination (RFE) as a form of feature reduction through the use of the `preciseTAD::TADrfe()` function, which is a wrapper for the `rfe` function in the `caret` package [@kuhn2012caret]. `preciseTAD::TADrfe()` implements a random forest model on the best subset of features from 2 to the maximum number of features in the data by powers of 2, using 3-fold cross-validation. We specify accuracy as the performance metric. 
+
+```{r eval=FALSE}
+set.seed(123)
+rfe_res <- TADrfe(trainData = tadData[[1]],
+                 tuneParams = list(ntree = 500, nodesize = 1),
+                 cvFolds = 5,
+                 cvMetric = "Accuracy",
+                 verbose = TRUE)
+```
+
+Results from RFE indicate that performance levels off when only considering the top 8 most predictive transcription factors (???Figure X). We can further optimize our model by evaluating the predictive importance of these top 8 genomic elements across each cross-fold via a heatmap. After aggregating the variable importance values across each cross-fold, we see that SMC3, RAD21, CTCF, and ZNF143 stand out as the most predictive elements TAD-boundary regions (???Figure X). These are known components of the loop-extrusion model that has been proposed as a mechanism for the 3D architecture of the human genome [@sanborn2015chromatin; @fudenberg2016formation; @hansen2018recent]. 
+
+Now that we have suitably reduced our feature space, we can implement a random forest algorithm built simply on the TFBS mentioned above (SMC3, RAD21, CTCF, and ZNF143). We can take advantage of the `preciseTAD::TADrandomForest()` function, which is a wrapper of the `randomForest` package [@breiman2001random; @liaw2002classification]. We specify the training and testing data, the hyperparameter values, the number of cross-validation folds, the performance metric to consider (here, accuracy), the seed to initialize for reproducibility, an indicator for retaining the model object, an indicator for retaining variable importances, the variable importance measure to consider (here, mean decrease in accuracy (MDA)), and an indicator for retaining model performances based on the test data. The function returns a list containing: 1) a trained model from caret with model information, 2) a `data.frame` of variable importance for each feature included in the model, and 3) a `data.frame` of various model performance metrics. Model performances are shown in ???Table X.
+
+```{r}
+# Restrict the data matrix to include only SMC3, RAD21, CTCF, and ZNF143
+tadDataFiltTrain <- tadData[[1]][,c(1, grep(paste0(c("Ctcf","Rad21","Smc3","Znf143"), collapse = "|"), names(tadData[[1]])))]
+tadDataFiltTest <- tadData[[2]][,c(1, grep(paste0(c("Ctcf","Rad21","Smc3","Znf143"), collapse = "|"), names(tadData[[1]])))]
+
+# Run RF
+set.seed(123)
+tadModel <- TADrandomForest(trainData  = tadDataFiltTrain,
+                            testData   = tadDataFiltTest,
+                            tuneParams = list(mtry     = c(2,3),
+                                              ntree    = 500,
+                                              nodesize = 1),
+                            cvFolds      = 3,
+                            cvMetric     = "Accuracy",
+                            verbose      = TRUE,
+                            model        = TRUE,
+                            importances  = TRUE,
+                            impMeasure   = "MDA",
+                            performances = TRUE)
+
+# View model performances
+performances <- tadModel[[3]]
+performances$Performance <- round(performances$Performance, digits = 2)
+rownames(performances) <- NULL #performances$Metric
+kable(performances, caption = "Table ???. List of model performances.")
+```
+
+### Reading in model objects using `preciseTADhub` (must be using R verion >= 4.1 or R-devel as of 11/23/20)
+
+For convenience, we have provided an ExperimentData package to supplement `preciseTAD`, called `preciseTADhub`. `preciseTADhub` offers users access to pre-trained random forest classification models built on CTCF, RAD21, SMC3, and ZNF143. Each of the 84 (2 cell lines $\times$ 2 ground truth boundaries $\times$ 21 autosomal chromosomes) files (.RDS) are stored as lists containing two objects: 1) a train object from \code{caret} with RF model information, and 2) a data.frame of variable importance for each genomic annotation included in the model. The file names are structured as follows: 
+
+$i$_$j$_$k$_$l$.rds
+
+where $i$ denotes the chromosome that was used as a holdout {CHR1, CHR2, ..., CHR21, CHR22} (i.e. for testing; meaning all other chromosomes were used for training), j denotes the cell line {GM12878, K562}, k denotes the resolution (size of genomic bins) {5kb, 10kb}, and l denotes the TAD/loop caller used to define ground truth {Arrowhead, Peakachu}.
+
+???Table X shows the file names and the corresponding ExperimentHub (EH) IDs. Since we want to make TAD boundary predictions on CHR14 for GM12878, we opt to read in the "CHR14_GM12878_5kb_Arrowhead.rds" file. This corresponds to the EH3863 EHID.
+
+| FileName                        | EHID          |
+|---------------------------------|---------------|
+| CHR1_GM12878_5kb_Arrowhead.rds  |     EH3815    |
+| CHR1_GM12878_10kb_Peakachu.rds  |     EH3816    |
+| CHR1_K562_5kb_Arrowhead.rds     |     EH3817    |
+| CHR1_K562_10kb_Peakachu.rds     |     EH3818    |
+| CHR2_GM12878_5kb_Arrowhead.rds  |     EH3819    |
+| CHR2_GM12878_10kb_Peakachu.rds  | EH3820        |
+| CHR2_K562_5kb_Arrowhead.rds     | EH3821        |
+| CHR2_K562_10kb_Peakachu.rds     | EH3822        |
+| CHR3_GM12878_5kb_Arrowhead.rds  | EH3823        |
+| CHR3_GM12878_10kb_Peakachu.rds  | EH3824        |
+| CHR3_K562_5kb_Arrowhead.rds     | EH3825        |
+| CHR3_K562_10kb_Peakachu.rds     | EH3826        |
+| CHR4_GM12878_5kb_Arrowhead.rds  | EH3827        |
+| CHR4_GM12878_10kb_Peakachu.rds  | EH3828        |
+| CHR4_K562_5kb_Arrowhead.rds     | EH3829        |
+| CHR4_K562_10kb_Peakachu.rds     | EH3830        |
+| CHR5_GM12878_5kb_Arrowhead.rds  | EH3831        |
+| CHR5_GM12878_10kb_Peakachu.rds  | EH3832        |
+| CHR5_K562_5kb_Arrowhead.rds     | EH3833        |
+| CHR5_K562_10kb_Peakachu.rds     | EH3834        |
+| CHR6_GM12878_5kb_Arrowhead.rds  | EH3835        |
+| CHR6_GM12878_10kb_Peakachu.rds  | EH3836        |
+| CHR6_K562_5kb_Arrowhead.rds     | EH3837        |
+| CHR6_K562_10kb_Peakachu.rds     | EH3838        |
+| CHR7_GM12878_5kb_Arrowhead.rds  | EH3839        |
+| CHR7_GM12878_10kb_Peakachu.rds  | EH3840        |
+| CHR7_K562_5kb_Arrowhead.rds     | EH3841        |
+| CHR7_K562_10kb_Peakachu.rds     | EH3842        |
+| CHR8_GM12878_5kb_Arrowhead.rds  | EH3843        |
+| CHR8_GM12878_10kb_Peakachu.rds  | EH3844        |
+| CHR8_K562_5kb_Arrowhead.rds     | EH3845        |
+| CHR8_K562_10kb_Peakachu.rds     | EH3846        |
+| CHR10_GM12878_5kb_Arrowhead.rds | EH3847        |
+| CHR10_GM12878_10kb_Peakachu.rds | EH3848        |
+| CHR10_K562_5kb_Arrowhead.rds    | EH3849        |
+| CHR10_K562_10kb_Peakachu.rds    | EH3850        |
+| CHR11_GM12878_5kb_Arrowhead.rds | EH3851        |
+| CHR11_GM12878_10kb_Peakachu.rds | EH3852        |
+| CHR11_K562_5kb_Arrowhead.rds    | EH3853        |
+| CHR11_K562_10kb_Peakachu.rds    | EH3854        |
+| CHR12_GM12878_5kb_Arrowhead.rds | EH3855        |
+| CHR12_GM12878_10kb_Peakachu.rds | EH3856        |
+| CHR12_K562_5kb_Arrowhead.rds    | EH3857        |
+| CHR12_K562_10kb_Peakachu.rds    | EH3858        |
+| CHR13_GM12878_5kb_Arrowhead.rds | EH3859        |
+| CHR13_GM12878_10kb_Peakachu.rds | EH3860        |
+| CHR13_K562_5kb_Arrowhead.rds    | EH3861        |
+| CHR13_K562_10kb_Peakachu.rds    | EH3862        |
+| CHR14_GM12878_5kb_Arrowhead.rds | EH3863        |
+| CHR14_GM12878_10kb_Peakachu.rds | EH3864        |
+| CHR14_K562_5kb_Arrowhead.rds    | EH3865        |
+| CHR14_K562_10kb_Peakachu.rds    | EH3866        |
+| CHR15_GM12878_5kb_Arrowhead.rds | EH3867        |
+| CHR15_GM12878_10kb_Peakachu.rds | EH3868        |
+| CHR15_K562_5kb_Arrowhead.rds    | EH3869        |
+| CHR15_K562_10kb_Peakachu.rds    | EH3870        |
+| CHR16_GM12878_5kb_Arrowhead.rds | EH3871        |
+| CHR16_GM12878_10kb_Peakachu.rds | EH3872        |
+| CHR16_K562_5kb_Arrowhead.rds    | EH3873        |
+| CHR16_K562_10kb_Peakachu.rds    | EH3874        |
+| CHR17_GM12878_5kb_Arrowhead.rds | EH3875        |
+| CHR17_GM12878_10kb_Peakachu.rds | EH3876        |
+| CHR17_K562_5kb_Arrowhead.rds    | EH3877        |
+| CHR17_K562_10kb_Peakachu.rds    | EH3878        |
+| CHR18_GM12878_5kb_Arrowhead.rds | EH3879        |
+| CHR18_GM12878_10kb_Peakachu.rds | EH3880        |
+| CHR18_K562_5kb_Arrowhead.rds    | EH3881        |
+| CHR18_K562_10kb_Peakachu.rds    | EH3882        |
+| CHR19_GM12878_5kb_Arrowhead.rds | EH3883        |
+| CHR19_GM12878_10kb_Peakachu.rds | EH3884        |
+| CHR19_K562_5kb_Arrowhead.rds    | EH3885        |
+| CHR19_K562_10kb_Peakachu.rds    | EH3886        |
+| CHR20_GM12878_5kb_Arrowhead.rds | EH3887        |
+| CHR20_GM12878_10kb_Peakachu.rds | EH3888        |
+| CHR20_K562_5kb_Arrowhead.rds    | EH3889        |
+| CHR20_K562_10kb_Peakachu.rds    | EH3890        |
+| CHR21_GM12878_5kb_Arrowhead.rds | EH3891        |
+| CHR21_GM12878_10kb_Peakachu.rds | EH3892        |
+| CHR21_K562_5kb_Arrowhead.rds    | EH3893        |
+| CHR21_K562_10kb_Peakachu.rds    | EH3894        |
+| CHR22_GM12878_5kb_Arrowhead.rds | EH3895        |
+| CHR22_GM12878_10kb_Peakachu.rds | EH3896        |
+| CHR22_K562_5kb_Arrowhead.rds    | EH3897        |
+| CHR22_K562_10kb_Peakachu.rds    | EH3898        |
+Table ???: File names and corresponding ExperimentHub (EH) IDs for all .RDS files stored in `preciseTADhub`.
+
+```{r, eval=FALSE}
+#Initialize ExperimentHub
+hub <- ExperimentHub()
+query(hub, "preciseTADhub")
+myfiles <- query(hub, "preciseTADhub")
+
+id <- "EH3863"
+tadModel <- myfiles[[id]] 
+```
 
 ### Boundary prediction with *preciseTAD*
 
+Recall that our model classifies boundary **regions**, in that each prediction refers to a genomic bin of width 5000 bases. To predict boundary coordinates at the base resolution more precisely, we can leverage our model through the use of the `preciseTAD::preciseTAD()` function.  Conceptually, instead of genomic bins, we annotate each base with the selected genomic annotations and featureType. We then apply our model on this annotation matrix to predict the probability of each base is a boundary given the associated genomic annotations. See the preciseTAD paper for a concise description of the algorithm and the pseudocode.
+
+Suppose we want to precisely predict the domain boundary coordinates for the 1.3Mb section of CHR14:50,050,000-51,350,000. To do so, we specify `chromCoords = list(50050000,51350000)`. Additionally, we set a threshold of 1.0 for constructing PTBRs using `threshold = 1.0`. For DBSCAN, we assign 10000 and 3 for the $\epsilon$ and *MinPts* parameters, respectively. The results is a list containing 3 elements including: 1) the genomic coordinates spanning each preciseTAD predicted region (PTBR), 2) the genomic coordinates of preciseTAD predicted boundaries points (PTBP), and 3) a named list including summary statistics of the following: PTBRWidth - PTBR width, PTBRCoverage - the proportion of bases within a PTBR with probabilities that equal to or exceed the threshold (t=1 by default), DistanceBetweenPTBR - the genomic distance between the end of the previous PTBR and the start of the subsequent PTBR, NumSubRegions - the number of the subregions in each PTBR cluster, SubRegionWidth - the width of the subregion forming each PTBR, DistBetweenSubRegions - the genomic distance between the end of the previous PTBR-specific subregion and the start of the subsequent PTBR-specific subregion, and the normalized enrichment of the genomic annotations used in the model around flanked PTBPs.
+
+```{r}
+# Restrict to include only SMC3, RAD21, CTCF, and ZNF143
+tfbsList_filt <- tfbsList[names(tfbsList) %in% c("Gm12878-Ctcf-Broad", 
+                                            "Gm12878-Rad21-Haib",
+                                            "Gm12878-Smc3-Sydh",
+                                            "Gm12878-Znf143-Sydh")]
+
+# Run preciseTAD
+pt <- preciseTAD(genomicElements.GR = tfbsList_filt,
+                featureType         = "distance",
+                CHR                 = "CHR14",
+                chromCoords         = list(50085000,50800000),
+                tadModel            = tadModel[[1]],
+                threshold           = 1.0,
+                verbose             = TRUE,
+                parallel            = NULL,
+                DBSCAN_params       = list(10000, 3),
+                flank               = 5000)
+
+# View the results
+pt
+```
+
 ### Using *preciseTAD* with Juicebox
+
+Juicebox is an interface provided by Aiden Lab that allows for superimposing boundary coordinates onto Hi-C contact maps. You can download a desktop version of the application [here](https://github.com/aidenlab/Juicebox/wiki/Download), our use the online version [here](https://www.aidenlab.org/juicebox). To visualize domains flanked by the predicted boundaries, you must first select a Hi-C map. Using the desktop version, you can import the contact matrix for GM12878 derived by Rao et al. 2014 by choosing `File -> Open... -> Rao and Huntley et al. -> GM12878 -> in situ Mbol -> primary`. To format `preciseTAD` results to use in Juicebox, users can take advantage of `preciseTAD::juicer_func()`, which transforms a GRanges object into a data frame as shown below. 
+
+```{r, eval=FALSE}
+# Transform
+pt_juice <- juicer_func(pt[[2]])
+```
+
+You will then need to save the PTBPs as a BED file using `write.table` as shown below. Once saved, import them into Juicebox using `Show Annotation Panel -> 2D Annotations -> Add Local -> pt_juice.bed`.
+
+```{r, eval=FALSE}
+filepath = "~/path/to/store/ptbps"
+write.table(pt_juice, 
+            file.path(filepath, "pt_juice.bed"),
+            quote = FALSE,
+            col.names = FALSE,
+            row.names = FALSE,
+            sep = "\t")
+```
+
+### Comparing *preciseTAD* with Arrowhead
+
+
 
 ### Cross-cell-type prediction
 
