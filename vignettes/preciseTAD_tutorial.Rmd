@@ -251,7 +251,7 @@ tadData <- createTADdata(bounds.GR = bounds,
                          genomicElements.GR = tfbsList,
                          featureType = "distance",
                          resampling = "rus",
-                         trainCHR = paste0("CHR",c(1:13,15:22)),
+                         trainCHR = paste0("CHR",c(1:8,10:13,15:22)),
                          predictCHR = "CHR14")
 
 # View subset of training data
@@ -317,13 +317,13 @@ kable(performances, caption = "Table 1. List of model performances.")
 
 For convenience, we have provided an ExperimentData package to supplement `preciseTAD`, called `preciseTADhub`. `preciseTADhub` offers users access to pre-trained random forest classification models built on CTCF, RAD21, SMC3, and ZNF143. Each of the 84 (2 cell lines $\times$ 2 ground truth boundaries $\times$ 21 autosomal chromosomes) files (.RDS) are stored as lists containing two objects: 1) a train object from \code{caret} with RF model information, and 2) a data.frame of variable importance for each genomic annotation included in the model. The file names are structured as follows: 
 
-$i$_$j$_$k$_$l$.rds
+$$i\_j\_k\_l.rds$$
 
-where $i$ denotes the chromosome that was used as a holdout {CHR1, CHR2, ..., CHR21, CHR22} (i.e. for testing; meaning all other chromosomes were used for training), j denotes the cell line {GM12878, K562}, k denotes the resolution (size of genomic bins) {5kb, 10kb}, and l denotes the TAD/loop caller used to define ground truth {Arrowhead, Peakachu}.
+where $i$ denotes the chromosome that was used as a holdout {CHR1, CHR2, ..., CHR21, CHR22} (i.e. for testing; meaning all other chromosomes were used for training), $j$ denotes the cell line {GM12878, K562}, $k$ denotes the resolution (size of genomic bins) {5kb, 10kb}, and l denotes the TAD/loop caller used to define ground truth {Arrowhead, Peakachu}.
 
 Table 2 shows the file names and the corresponding ExperimentHub (EH) IDs. Since we want to make TAD boundary predictions on CHR14 for GM12878, we opt to read in the "CHR14_GM12878_5kb_Arrowhead.rds" file. This corresponds to the EH3863 EHID.
 
-Table 2: File names and corresponding ExperimentHub (EH) IDs for all .RDS files stored in `preciseTADhub`.
+
 | FileName                        | EHID          |
 |---------------------------------|---------------|
 | CHR1_GM12878_5kb_Arrowhead.rds  |     EH3815    |
@@ -410,6 +410,8 @@ Table 2: File names and corresponding ExperimentHub (EH) IDs for all .RDS files 
 | CHR22_GM12878_10kb_Peakachu.rds | EH3896        |
 | CHR22_K562_5kb_Arrowhead.rds    | EH3897        |
 | CHR22_K562_10kb_Peakachu.rds    | EH3898        |
+Table 2: File names and corresponding ExperimentHub (EH) IDs for all .RDS files stored in `preciseTADhub`.
+
 
 ```{r, eval=FALSE}
 #Initialize ExperimentHub
@@ -472,7 +474,7 @@ filepath = "~/path/to/store/ptbps"
 write.table(pt_juice, 
             file.path(filepath, "pt_juice.bed"),
             quote = FALSE,
-            col.names = FALSE,
+            col.names = TRUE,
             row.names = FALSE,
             sep = "\t")
 ```
@@ -491,7 +493,7 @@ where A and B represent genomic regions created by flanked called and predicted 
 As an example we have provided results for CHR14 on GM12878 and K562 in order to compare Arrowhead and *preciseTAD*. Specifically, we have provided cell-line specific Arrowhead output [here](???) and preciseTAD-predicted TAD boundaries [here](???). In order to create enriched heatmaps and profile plots, users will need to download bigwig files for each cell-line specific annotation of interest, which can be done through ENCODE [here](???). 
 -->
 
-Below is an example script of how to create an enriched heatmap and profile plot for a set of boundaries using deepTools (version 2.0). Users will first need to create the matrix of signal values, described above, using the *computeMatrix* tool. To do so, you need to save the resulting boundaries as a .BED file (without a header), where the first column is the chromosome, second column is the boundary coordinate, and third column is (boundary coordinate + 1). The TSS option is used such that the 2nd column of the .BED file is chosen as the center (i.e. the boundary coordinate). Users will next need to download bigwig files for each cell-line specific annotation of interest, which can be done through ENCODE [here](???). The annotation (.bigwig) along with the boundaries (.BED) are provided next in the python code. We next specify by how much to flank around the boundary. Here, we opt for 5 kb (5000 bases) on either side. Additionally, we specify to divide the flanked region into 50 base segments (i.e. (5000+5000)/50=1000/50=200 segments). Lastly, we provide the name of the resulting matrix (computeMatrix_output.gz).
+Below is an example script of how to create an enriched heatmap and profile plot for a set of boundaries using deepTools (version 2.0). Users will first need to create the matrix of signal values, described above, using the *computeMatrix* tool. To do so, you need to save the resulting boundaries as a .BED file (without a header), where the first column is the chromosome, second column is the boundary coordinate, and third column is (boundary coordinate + 1). The TSS option is used such that the 2nd column of the .BED file is chosen as the center (i.e. the boundary coordinate). Users will next need to download bigwig files for each cell-line specific annotation of interest, which can be done through ENCODE [here](https://www.encodeproject.org/chip-seq-matrix/?type=Experiment&replicates.library.biosample.donor.organism.scientific_name=Homo%20sapiens&assay_title=TF%20ChIP-seq&status=released). The annotation (.bigwig) along with the boundaries (.BED) are provided next in the python code. We next specify by how much to flank around the boundary. Here, we opt for 5 kb (5000 bases) on either side. Additionally, we specify to divide the flanked region into 50 base segments (i.e. (5000+5000)/50=1000/50=200 segments). Lastly, we provide the name of the resulting matrix (computeMatrix_output.gz).
 
 ```{python, eval=FALSE, python.reticulate=FALSE}
 # Create the matrix of signal using computeMatrix
@@ -533,11 +535,22 @@ plotProfile -m computeMatrix_output.gz \ #name of the output of computeMatrix
 
 ## Comparing *preciseTAD* with Arrowhead
 
-We extend Section ??? by using *preciseTAD* to predict TAD boundaries on all of chromosome 14 for both GM12878 and K562 cell lines. When trained using Arrowhead ground truth boundaries at 5 kb, *preciseTAD* predicted a total of ??? and ??? TAD boundaries on CHR14 for GM12878 and K562 respectively (Table ???). They are provided as a `GRanges` object [here](???). For comparison, Arrowhead identified a total of ??? and ??? TAD boundaries on CHR14 for GM12878 and K562 respectively (Table ???), which are also provided as a `GRanges` object [here](???). [???mention difference in sizes between cell lines if necessary]. We see that even though *preciseTAD* predicted less boundaries than Arrowhead, CTCF signal is much more colocalized around *preciseTAD*-predicted TAD boundaries compared to Arrowhead-called TAD boundaries (???Figure X). This can be attributed to Arrowhead's inflation of called TADs at 5 kb. Additionally, *preciseTAD* boundaries are statistically significantly closer to CTCF sites (???Figure X). These results indicate that *preciseTAD*-predicted boundaries better reflected the known biology of boundary formation.
+We extend Section 6.4 by using *preciseTAD* to predict TAD boundaries on all of chromosome 14 for both GM12878 and K562 cell lines. This can be done by simply replacing the `chromCoords` parameter with `NULL`. We have provided the boundaries predicted by *preciseTAD* [here](https://github.com/dozmorovlab/preciseTADworkshop/tree/main/data/preciseTAD_5kb) and the Arrowhead called boundaries [here](https://github.com/dozmorovlab/preciseTADworkshop/tree/main/data/Arrowhead_5kb). When trained using Arrowhead ground truth boundaries at 5 kb, *preciseTAD* predicted a total of 440 and 243 TAD boundaries on CHR14 for GM12878 and K562 respectively (Table 3). For comparison, Arrowhead identified a total of 555 and 240 TAD boundaries on CHR14 for GM12878 and K562 respectively (Table 3). <!--[???mention difference in sizes between cell lines if necessary].--> We see that even though *preciseTAD* predicted less boundaries than Arrowhead, CTCF signal is much more colocalized around *preciseTAD*-predicted TAD boundaries compared to Arrowhead-called TAD boundaries (Figure 5A). This can be attributed to Arrowhead's inflation of called TADs at 5 kb. Additionally, *preciseTAD* boundaries are statistically significantly closer to CTCF sites (Figure B). These results indicate that *preciseTAD*-predicted boundaries better reflected the known biology of boundary formation.
 
+|         | Arrowhead | preciseTAD |
+|---------|-----------|------------|
+| GM12878 | 555       | 440        |
+| K562    | 240       | 243        |
+Table 3. TAD boundaries either called (Arrowhead) or predicted (*preciseTAD*) on CHR14.
 
+<center>
+
+![**Figure 5. Levels of CTCF enrichment around *preciseTAD*-predicted boundaries are greater than Arrowhead-called boundaries.** ](figures/pt_vs_arrowhead.png)
+
+</center>
 
 Previous studies suggest that TAD boundaries are conserved across cell lines [@dixon2012topological; @krefting2018evolutionary; @nora2012spatial; @sexton2012three]. To assess the level of cross-cell-line conservation, we can evaluate the overlap between cell line-specific boundaries detected by *preciseTAD* and Arrowhead. Only ???% of boundaries were conserved between cell lines for Arrowhead (J=???), while ???% of *preciseTAD*-predicted boundaries were conserved between GM12878 and K562 cell lines (J=???) (???Figure X). The better conservation of *preciseTAD*-predicted boundaries further supports the notion of their higher biological relevance. 
+
 
 
 ## Cross-cell-type prediction
