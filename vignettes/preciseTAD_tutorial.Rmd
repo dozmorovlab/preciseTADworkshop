@@ -65,7 +65,7 @@ In this workshop we will demonstrate the following:
 -->
 - *preciseTAD* predictions are more enriched for known molecular drivers of 3D chromatin, including CTCF, RAD21, SMC3, and ZNF143
 - *preciseTAD*-predicted boundaries are more conserved across cell lines
-- Using the methods developed, a model trained in one cell line can predict boundaries in another cell line
+- Using the methods developed, a model trained in one cell line can accurately predict boundaries in another cell line
 
 # Obtaining ground truth TAD boundaries
 
@@ -549,20 +549,31 @@ Table 3. TAD boundaries either called (Arrowhead) or predicted (*preciseTAD*) on
 
 </center>
 
-Previous studies suggest that TAD boundaries are conserved across cell lines [@dixon2012topological; @krefting2018evolutionary; @nora2012spatial; @sexton2012three]. To assess the level of cross-cell-line conservation, we can evaluate the overlap between cell line-specific boundaries detected by *preciseTAD* and Arrowhead. Only ???% of boundaries were conserved between cell lines for Arrowhead (J=???), while ???% of *preciseTAD*-predicted boundaries were conserved between GM12878 and K562 cell lines (J=???) (???Figure X). The better conservation of *preciseTAD*-predicted boundaries further supports the notion of their higher biological relevance. 
+Previous studies suggest that TAD boundaries are conserved across cell lines [@dixon2012topological; @krefting2018evolutionary; @nora2012spatial; @sexton2012three]. To assess the level of cross-cell-line conservation, we can evaluate the overlap between cell line-specific boundaries detected by *preciseTAD* and Arrowhead. Both *preciseTAD*-predicted and Arrowhead-called TAD boundaries on CHR14 were flanked on both sides by 5 kb. Only 21% of boundaries were conserved between cell lines for Arrowhead (J=0.16) (Figure 6A), while 37% of *preciseTAD*-predicted boundaries were conserved between GM12878 and K562 cell lines (J=0.32) (Figure 6B). The better conservation of *preciseTAD*-predicted boundaries further supports the notion of their higher biological relevance. 
 
+<center>
 
+![**Figure 6. *preciseTAD*-predicted TAD boundaries are more conserved across cell lines.** ](figures/conservation.png){width=75%}
+
+</center>
 
 ## Cross-cell-type prediction
 
-The *preciseTAD* algorithm can be extended to predict boundaries on cell lines that do not currently have high resolution HiC data using publicly available cell-line specific annotations. We highlight this technique by evaluating two scenarios (for CHR14): 1) training on GM12878 and predicting boundaries on GM12878 (GM on GM) vs. training on K562 and predicting on GM12878 (K on GM), and 2) training on K562 and predicting boundaries on K562 (K on K) vs. training on GM12878 and predicting boundaries on K562 (GM on K). Using Arrowhead-trained models, ???% (J=???) and ???% (J=???) of predicted boundaries overlapped in both cross-cell-line prediction scenarios (??? Figure X). Furthermore, boundaries predicted on unseen annotation data exhibit a similar level of enrichment for CTCF as did those trained and predicted on the same cell line (??? Figure X). These results indicate that *preciseTAD* pre-trained models can be successfully used to predict domain boundaries for cell lines lacking Hi-C data but for which genome annotation data is available.
+The *preciseTAD* algorithm can be extended to predict boundaries on cell lines that do not currently have high resolution HiC data using publicly available cell-line specific annotations. We highlight this technique by evaluating the following scenario (for CHR14): training on GM12878 and predicting boundaries on GM12878 (GM on GM) vs. training on K562 and predicting on GM12878 (K on GM). Using the *preciseTAD* framework, 74% (J=0.68) of predicted boundaries overlapped in the cross-cell-line prediction scenario (Figure 7A). Furthermore, boundaries predicted on unseen annotation data exhibit a similar level of enrichment for CTCF as did those trained and predicted on the same cell line (Figure 7B). These results indicate that *preciseTAD* pre-trained models can be successfully used to predict domain boundaries for cell lines lacking Hi-C data but for which genome annotation data is available.
+
+<center>
+
+![**Figure 7. Cross cell-line predicted boundaries strongly overlap with same-cell-line predicted boundaries.** ](figures/cross_cell_line_overlap.png){width=75%}
+
+</center>
 
 
-
+<!--
 Scripts used to generate the figures in Sections ??? and ??? can be found [here](???).
+-->
 
 # Conclusion
 
-In this workshop we demonstrate the usefulness of *preciseTAD*, an R package that provides users with a data-driven approach toward TAD boundary prediction. *preciseTAD* leverages a random forest (RF) classification model built on low-resolution domain boundaries obtained from domain calling tools, and high-resolution genomic annotations as the feature space. *preciseTAD* predicts the probability of each base being a boundary, and identifies the precise location of boundary regions and the most likely boundary points among them. We benchmarked *preciseTAD* against Arrowhead [@durand2016juicebox], an established TAD-caller. We showed that, unlike Arrowhead, *preciseTAD* does not inflate the number of predicted boundaries, providing only the most biologically meaningful boundaries that demarcate regions of high inter-chromosomal interactions. *preciseTAD* boundaries were more enriched for known architectural transcription factors, such as CTCF. Likewise, *preciseTAD* boundaries were more conserved between GM12878 and K562 cell lines, a known feature among the 3D architecture of the human genome. Lastly, we show that cell-line-specific functional genomic annotation data (ChIP-seq) can be used to precisely predict domain boundaries across cell lines. Pre-trained models are publicly available on Bioconductor in the ExperimentHub package *preciseTADhub*, [here](???). This creates new opportunities for users to predict domain boundaries on cell lines without using high-resolution Hi-C data for which there is none available.
+In this workshop we demonstrate the usefulness of *preciseTAD*, an R package that provides users with a data-driven approach toward TAD boundary prediction. *preciseTAD* leverages a random forest (RF) classification model built on low-resolution domain boundaries obtained from domain calling tools, and high-resolution genomic annotations as the feature space. *preciseTAD* predicts the probability of each base being a boundary, and identifies the precise location of boundary regions and the most likely boundary points among them. We benchmarked *preciseTAD* against Arrowhead [@durand2016juicebox], an established TAD-caller. We showed that, unlike Arrowhead, *preciseTAD* does not inflate the number of predicted boundaries, providing only the most biologically meaningful boundaries that demarcate regions of high inter-chromosomal interactions. *preciseTAD* boundaries were more enriched for known architectural transcription factors, such as CTCF. Likewise, *preciseTAD* boundaries were more conserved between GM12878 and K562 cell lines, a known feature among the 3D architecture of the human genome. Lastly, we show that cell-line-specific functional genomic annotation data (ChIP-seq) can be used to precisely predict domain boundaries across cell lines. Pre-trained models are publicly available on Bioconductor in the ExperimentHub package *preciseTADhub*, [here](https://github.com/dozmorovlab/preciseTADhub). This creates new opportunities for users to predict domain boundaries on cell lines without using high-resolution Hi-C data for which there is none available.
 
 # References
