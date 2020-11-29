@@ -34,15 +34,14 @@ options(stringsAsFactors = FALSE)
 # Installation
 
 ```{r}
-library(devtools)
 library(knitr)
-library(ggplot2)
 
 # if (!requireNamespace("BiocManager", quietly=TRUE))
 #     install.packages("BiocManager")
 # BiocManager::install("preciseTAD")
 #library(preciseTAD)
 
+#library(devtools)
 #devtools::install_github("dozmorovlab/preciseTAD")
 library(preciseTAD)
 
@@ -180,7 +179,7 @@ The next piece of data that we need are the functional genomic elements used to 
 |                                             | Znf143          |
 -->
 
-Cell type-specific genomic annotation data can be downloaded from the [ENCODE](http://www.encodeproject.org/chip-seq-matrix/?type=Experiment&replicates.library.biosample.donor.organism.scientific_name=Homo%20sapiens&assay_title=TF%20ChIP-seq&status=released) data portal as BED files. For convenience, we have included the list of elements in the `\data\genomicElements` folder of the github repository [here](https://github.com/dozmorovlab/preciseTADworkshop).
+Cell type-specific genomic annotation data can be downloaded from the [ENCODE](http://www.encodeproject.org/chip-seq-matrix/?type=Experiment&replicates.library.biosample.donor.organism.scientific_name=Homo%20sapiens&assay_title=TF%20ChIP-seq&status=released) data portal as BED files. For convenience, we have included the list of elements in the `\inst\extdata\genomicElements` folder of the github repository [here](https://github.com/dozmorovlab/preciseTADworkshop).
 
 # Describing *preciseTAD* functionality
 
@@ -237,7 +236,7 @@ bounds
 Additionally, users will need to add each of the respective .BED files,representing the functional genomic elements of choice, to a single `GenomicRangesList` object. This can be done via the `preciseTAD::bedToGRangesList()` function. The `signal` argument refers to the column in the BED files containing peak signal strength values and is used to assign metadata to the corresponding GRanges (this needs to be the same column for every .BED file; only necessary for downstream plotting).
 
 ```{r}
-path <- "../data/genomicElements"
+path <- "../inst/extdata/genomicElements"
 path
 tfbsList <- bedToGRangesList(filepath=path, bedList=NULL, bedNames=NULL, pattern = "*.bed", signal=4)
 
@@ -535,7 +534,7 @@ plotProfile -m computeMatrix_output.gz \ #name of the output of computeMatrix
 
 ## Comparing *preciseTAD* with Arrowhead
 
-We extend Section 6.4 by using *preciseTAD* to predict TAD boundaries on all of chromosome 14 for both GM12878 and K562 cell lines. This can be done by simply replacing the `chromCoords` parameter with `NULL`. We have provided the boundaries predicted by *preciseTAD* [here](https://github.com/dozmorovlab/preciseTADworkshop/tree/main/data/preciseTAD_5kb) and the Arrowhead called boundaries [here](https://github.com/dozmorovlab/preciseTADworkshop/tree/main/data/Arrowhead_5kb). When trained using Arrowhead ground truth boundaries at 5 kb, *preciseTAD* predicted a total of 440 and 243 TAD boundaries on CHR14 for GM12878 and K562 respectively (Table 3). For comparison, Arrowhead identified a total of 555 and 240 TAD boundaries on CHR14 for GM12878 and K562 respectively (Table 3). We see that even though *preciseTAD* predicted less boundaries than Arrowhead, CTCF signal is much more colocalized around *preciseTAD*-predicted TAD boundaries compared to Arrowhead-called TAD boundaries (Figure 5A). This can be attributed to Arrowhead's inflation of called TADs at 5 kb. Additionally, *preciseTAD* boundaries are statistically significantly closer to CTCF sites (Figure B). These results indicate that *preciseTAD*-predicted boundaries better reflected the known biology of boundary formation.
+We extend Section 6.4 by using *preciseTAD* to predict TAD boundaries on all of chromosome 14 for both GM12878 and K562 cell lines. This can be done by simply replacing the `chromCoords` parameter with `NULL`. We have provided the boundaries predicted by *preciseTAD* [here](https://github.com/dozmorovlab/preciseTADworkshop/tree/main/inst/extdata/preciseTAD_5kb) and the Arrowhead called boundaries [here](https://github.com/dozmorovlab/preciseTADworkshop/tree/main/inst/extdata/Arrowhead_5kb). When trained using Arrowhead ground truth boundaries at 5 kb, *preciseTAD* predicted a total of 440 and 243 TAD boundaries on CHR14 for GM12878 and K562 respectively (Table 3). For comparison, Arrowhead identified a total of 555 and 240 TAD boundaries on CHR14 for GM12878 and K562 respectively (Table 3). We see that even though *preciseTAD* predicted less boundaries than Arrowhead, CTCF signal is much more colocalized around *preciseTAD*-predicted TAD boundaries compared to Arrowhead-called TAD boundaries (Figure 5A). This can be attributed to Arrowhead's inflation of called TADs at 5 kb. Additionally, *preciseTAD* boundaries are statistically significantly closer to CTCF sites (Figure B). These results indicate that *preciseTAD*-predicted boundaries better reflected the known biology of boundary formation.
 
 |         | Arrowhead | preciseTAD |
 |---------|-----------|------------|
