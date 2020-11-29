@@ -37,7 +37,6 @@ options(stringsAsFactors = FALSE)
 library(devtools)
 library(knitr)
 library(ggplot2)
-library(ExperimentHub)
 
 # if (!requireNamespace("BiocManager", quietly=TRUE))
 #     install.packages("BiocManager")
@@ -49,6 +48,7 @@ library(preciseTAD)
 
 #install_github("stilianoudakis/preciseTADhub")
 #library(preciseTADhub)
+#library(ExperimentHub)
 ```
 
 # Introduction

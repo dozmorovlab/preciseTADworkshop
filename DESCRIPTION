@@ -40,6 +40,7 @@ Suggests:
     rmarkdown,
     pkgdown
 Imports: 
+    ExperimentHub,
     preciseTAD,
     S4Vectors,
     IRanges,
