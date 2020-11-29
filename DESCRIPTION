@@ -1,7 +1,8 @@
-Package: BuildABiocWorkshop2020
-Title: Bioconductor Workshop Template and Github Actions
+Package: preciseTADworkshop
+Title: A workshop describing preciseTAD: a machine-learning framework for 
+    predicting 3D domain boundaries using functional genomic elements
 Version: 0.1.1
-Authors@R: 
+Authors@R: c(
     person(given = "Spiro",
            family = "Stilianoudakis",
            role = c("aut", "cre"),
@@ -10,7 +11,7 @@ Authors@R:
            family = "Dozmorov",
            role = c("aut"),
            email = "mikhail.dozmorov@gmail.com",
-           comment = c(ORCID = "0000-0002-0086-8358"))
+           comment = c(ORCID = "0000-0002-0086-8358")))
 Description: Chromosome conformation capture technologies combined with
     high-throughput sequencing (Hi-C) have revealed that chromatin undergoes 
     layers of compaction through DNA looping and folding, forming dynamic 3D 
@@ -32,8 +33,8 @@ LazyData: true
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.1.0
 Depends: 
-    Biobase
-    R (>= 4.1)
+    Biobase,
+    R (>= 4.0.1)
 Suggests: 
     knitr,
     rmarkdown,
