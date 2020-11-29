@@ -34,12 +34,13 @@ Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.1.0
 Depends: 
     Biobase,
-    R (>= 4.0.1)
+    R (>= 4.0.0)
 Suggests: 
     knitr,
     rmarkdown,
     pkgdown
 Imports: 
+    devtools,
     ExperimentHub,
     preciseTAD,
     S4Vectors,
