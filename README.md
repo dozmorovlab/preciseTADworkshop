@@ -6,10 +6,10 @@ This workshop is based on [Spiro C. Stilianoudakis, Mikhail G. Dozmorov; "precis
 
 Key materials for the workshop: 
 
-- [???Slides with a brief introduction for the workshop]()
+- [Slides with a brief introduction for the workshop](???)
 - [preciseTADworkshop GitHub repo](https://github.com/dozmorovlab/preciseTADworkshop)
-- [???preciseTADworkshop Docker image]()
-- [???preciseTADworkshop pkgdown website]()
+- [preciseTADworkshop Docker image](???)
+- [preciseTADworkshop pkgdown website](https://dozmorovlab.github.io/preciseTADworkshop/)
 
 This workshop will be presented at the [Bioconductor Virtual Conference 2020](https://bioc2020.bioconductor.org/), December ???, 2020, ???am-???pm
 
