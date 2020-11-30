@@ -64,4 +64,4 @@ Imports:
 URL: https://dozmorovlab.github.io/preciseTADworkshop/
 BugReports: https://github.com/mdozmorov/preciseTADworkshop/issues/new/choose
 VignetteBuilder: knitr
-DockerImage: dozmorovlab/precisetadworkshop:latest
+DockerImage: stilianoudakis/precisetadworkshop:latest
