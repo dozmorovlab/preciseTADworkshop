@@ -1,0 +1,10 @@
+pandoc: 2.7.3
+pkgdown: 1.6.1
+pkgdown_sha: ~
+articles:
+  preciseTAD_tutorial: preciseTAD_tutorial.html
+last_built: 2020-11-30T03:18Z
+urls:
+  reference: https://dozmorovlab.github.io/preciseTADworkshop//reference
+  article: https://dozmorovlab.github.io/preciseTADworkshop//articles
+
