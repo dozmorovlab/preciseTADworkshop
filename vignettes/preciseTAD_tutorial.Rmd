@@ -1,5 +1,5 @@
 ---
-title: "preciseTAD: a machine-learning framework for predicting 3D domain boundaries using functional genomic elements"
+title: "preciseTAD: A machine learning framework for precise 3D domain boundary prediction at base-level resolution"
 author:
 - name: Spiro Stilianoudakis
   affiliation:
@@ -447,7 +447,7 @@ tfbsList_filt <- tfbsList[names(tfbsList) %in% c("Gm12878-Ctcf-Broad",
 pt <- preciseTAD(genomicElements.GR = tfbsList_filt,
                 featureType         = "distance",
                 CHR                 = "CHR14",
-                chromCoords         = list(50070000,50800000),
+                chromCoords         = list(50070000,51360000),
                 tadModel            = tadModel[[1]],
                 threshold           = 1.0,
                 verbose             = TRUE,
@@ -468,7 +468,7 @@ Juicebox is an interface provided by Aiden Lab that allows for superimposing bou
 pt_juice <- juicer_func(pt$PTBP)
 ```
 
-You will then need to save the PTBPs as a BED file using `write.table` as shown below. Once saved, import them into Juicebox using `Show Annotation Panel -> 2D Annotations -> Add Local -> pt_juice.bed`.
+You will then need to save the PTBPs as a BED file using `write.table` as shown below. Once saved, import them into Juicebox using `Show Annotation Panel -> 2D Annotations -> Add Local -> pt_juice.bed`. An example of using Juicebox to plot 3D domain boundary coordinates is shown in Figure 5.
 
 ```{r, eval=FALSE}
 filepath = "~/path/to/store/ptbps"
@@ -480,7 +480,11 @@ write.table(pt_juice,
             sep = "\t")
 ```
 
-<!--[???include juicebox figure]-->
+<center>
+
+![**Figure 5. Juicebox visualization of TAD boundaries called by Arrowhead (blue) vs predicted by *preciseTAD* (green).** The region presented are the genomic coordinates spanning 50,055,000-51,360,000 on chromosome 14 of GM12878.](figures/juicer_screenshot2.png){width=75%}
+
+</center>
 
 ## Techniques for visualizing TAD boundaries
 
@@ -534,7 +538,7 @@ plotProfile -m computeMatrix_output.gz \ #name of the output of computeMatrix
 
 ## Comparing *preciseTAD* with Arrowhead
 
-We extend Section 6.4 by using *preciseTAD* to predict TAD boundaries on all of chromosome 14 for both GM12878 and K562 cell lines. This can be done by simply replacing the `chromCoords` parameter with `NULL`. We have provided the boundaries predicted by *preciseTAD* [here](https://github.com/dozmorovlab/preciseTADworkshop/tree/main/inst/extdata/preciseTAD_5kb) and the Arrowhead called boundaries [here](https://github.com/dozmorovlab/preciseTADworkshop/tree/main/inst/extdata/Arrowhead_5kb). When trained using Arrowhead ground truth boundaries at 5 kb, *preciseTAD* predicted a total of 440 and 243 TAD boundaries on CHR14 for GM12878 and K562 respectively (Table 3). For comparison, Arrowhead identified a total of 555 and 240 TAD boundaries on CHR14 for GM12878 and K562 respectively (Table 3). We see that even though *preciseTAD* predicted less boundaries than Arrowhead, CTCF signal is much more colocalized around *preciseTAD*-predicted TAD boundaries compared to Arrowhead-called TAD boundaries (Figure 5A). This can be attributed to Arrowhead's inflation of called TADs at 5 kb. Additionally, *preciseTAD* boundaries are statistically significantly closer to CTCF sites (Figure B). These results indicate that *preciseTAD*-predicted boundaries better reflected the known biology of boundary formation.
+We extend Section 6.4 by using *preciseTAD* to predict TAD boundaries on all of chromosome 14 for both GM12878 and K562 cell lines. This can be done by simply replacing the `chromCoords` parameter with `NULL`. We have provided the boundaries predicted by *preciseTAD* [here](https://github.com/dozmorovlab/preciseTADworkshop/tree/main/inst/extdata/preciseTAD_5kb) and the Arrowhead called boundaries [here](https://github.com/dozmorovlab/preciseTADworkshop/tree/main/inst/extdata/Arrowhead_5kb). When trained using Arrowhead ground truth boundaries at 5 kb, *preciseTAD* predicted a total of 440 and 243 TAD boundaries on CHR14 for GM12878 and K562 respectively (Table 3). For comparison, Arrowhead identified a total of 555 and 240 TAD boundaries on CHR14 for GM12878 and K562 respectively (Table 3). We see that even though *preciseTAD* predicted less boundaries than Arrowhead, CTCF signal is much more colocalized around *preciseTAD*-predicted TAD boundaries compared to Arrowhead-called TAD boundaries (Figure 6A). This can be attributed to Arrowhead's inflation of called TADs at 5 kb. Additionally, *preciseTAD* boundaries are statistically significantly closer to CTCF sites (Figure 6B). These results indicate that *preciseTAD*-predicted boundaries better reflected the known biology of boundary formation.
 
 |         | Arrowhead | preciseTAD |
 |---------|-----------|------------|
@@ -544,25 +548,25 @@ Table 3. TAD boundaries either called (Arrowhead) or predicted (*preciseTAD*) on
 
 <center>
 
-![**Figure 5. Levels of CTCF enrichment around *preciseTAD*-predicted boundaries are greater than Arrowhead-called boundaries.** ](figures/pt_vs_arrowhead.png)
+![**Figure 6. Levels of CTCF enrichment around *preciseTAD*-predicted boundaries are greater than Arrowhead-called boundaries.** ](figures/pt_vs_arrowhead.png)
 
 </center>
 
-Previous studies suggest that TAD boundaries are conserved across cell lines [@dixon2012topological; @krefting2018evolutionary; @nora2012spatial; @sexton2012three]. To assess the level of cross-cell-line conservation, we can evaluate the overlap between cell line-specific boundaries detected by *preciseTAD* and Arrowhead. To do so, *preciseTAD*-predicted and Arrowhead-called TAD boundaries on CHR14 were first flanked on both sides by 5 kb. Only 21% of boundaries were conserved between cell lines for Arrowhead (J=0.16) (Figure 6A), while 37% of *preciseTAD*-predicted boundaries were conserved between GM12878 and K562 cell lines (J=0.32) (Figure 6B). The higher level of conservation for *preciseTAD*-predicted boundaries further supports the notion of their higher biological relevance. 
+Previous studies suggest that TAD boundaries are conserved across cell lines [@dixon2012topological; @krefting2018evolutionary; @nora2012spatial; @sexton2012three]. To assess the level of cross-cell-line conservation, we can evaluate the overlap between cell line-specific boundaries detected by *preciseTAD* and Arrowhead. To do so, *preciseTAD*-predicted and Arrowhead-called TAD boundaries on CHR14 were first flanked on both sides by 5 kb. Only 21% of boundaries were conserved between cell lines for Arrowhead (J=0.16) (Figure 7A), while 37% of *preciseTAD*-predicted boundaries were conserved between GM12878 and K562 cell lines (J=0.32) (Figure 7B). The higher level of conservation for *preciseTAD*-predicted boundaries further supports the notion of their higher biological relevance. 
 
 <center>
 
-![**Figure 6. *preciseTAD*-predicted TAD boundaries are more conserved across cell lines.** ](figures/conservation.png){width=75%}
+![**Figure 7. *preciseTAD*-predicted TAD boundaries are more conserved across cell lines.** ](figures/conservation.png){width=75%}
 
 </center>
 
 ## Cross cell-line prediction
 
-The *preciseTAD* algorithm can be extended to predict boundaries on cell lines that do not currently have high resolution HiC data using publicly available cell-line specific annotations. We highlight this technique by evaluating the following scenario (for CHR14): training on GM12878 and predicting boundaries on GM12878 (GM on GM) vs. training on K562 and predicting on GM12878 (K on GM). Using the *preciseTAD* framework, 74% (J=0.68) of predicted boundaries overlapped in the cross-cell-line prediction scenario (Figure 7A). Furthermore, boundaries predicted on unseen annotation data exhibit a similar level of enrichment for CTCF as did those trained and predicted on the same cell line (Figure 7B). These results indicate that *preciseTAD* pre-trained models can be successfully used to predict domain boundaries for cell lines lacking Hi-C data but for which genome annotation data is available.
+The *preciseTAD* algorithm can be extended to predict boundaries on cell lines that do not currently have high resolution HiC data using publicly available cell-line specific annotations. We highlight this technique by evaluating the following scenario (for CHR14): training on GM12878 and predicting boundaries on GM12878 (GM on GM) vs. training on K562 and predicting on GM12878 (K on GM). Using the *preciseTAD* framework, 74% (J=0.68) of predicted boundaries overlapped in the cross-cell-line prediction scenario (Figure 8A). Furthermore, boundaries predicted on unseen annotation data exhibit a similar level of enrichment for CTCF as did those trained and predicted on the same cell line (Figure 7B). These results indicate that *preciseTAD* pre-trained models can be successfully used to predict domain boundaries for cell lines lacking Hi-C data but for which genome annotation data is available.
 
 <center>
 
-![**Figure 7. Cross cell-line predicted boundaries strongly overlap with same-cell-line predicted boundaries.** ](figures/cross_cell_line_overlap.png){width=75%}
+![**Figure 8. Cross cell-line predicted boundaries strongly overlap with same-cell-line predicted boundaries.** ](figures/cross_cell_line_overlap.png){width=75%}
 
 </center>
 
